@@ -230,3 +230,40 @@ class TestCommandLine:
         path = self.write(tmp_path, "x")
         assert self.run([path, "--max-chars", "0"]) == 2
         assert "max_chars" in capsys.readouterr().err
+
+
+class TestRigour:
+    """Budget shapes and the paths that the first pass left untested."""
+
+    def test_reading_a_stored_value_uses_the_file(self, tmp_path):
+        capped = cap("q" * 900, max_chars=40, directory=tmp_path)
+        assert capped.read(0, 3) == "qqq"
+        assert len(capped.read()) == 900
+
+    def test_a_tail_only_budget_that_is_not_enough(self):
+        capped = cap("x" * 500, max_chars=100, tail=100)
+        assert capped.tail_chars == 100
+        assert capped.head_chars == 0
+        assert capped.text.endswith("x")
+
+    def test_head_and_tail_that_overflow_the_budget(self):
+        capped = cap("0123456789" * 50, max_chars=60, head=50, tail=50)
+        assert capped.head_chars == 50
+        assert capped.tail_chars == 10
+
+    def test_a_json_file_that_is_not_json_falls_back_to_text(self, tmp_path, capsys):
+        from outputcap.__main__ import main
+
+        path = tmp_path / "broken.json"
+        path.write_text('{"a": ' + "x" * 300, encoding="utf-8")
+        assert main([str(path), "--max-chars", "60"]) == 0
+        assert "truncated" in capsys.readouterr().out
+
+    def test_a_head_only_budget_without_a_tail_argument(self):
+        capped = cap("0123456789" * 50, max_chars=100, head=60)
+        assert capped.head_chars == 60
+        assert capped.tail_chars == 40
+
+    def test_slices_of_a_text_that_fits_exactly(self):
+        assert slices("abcd", 4) == [(0, 4)]
+        assert slices("x" * 5, 5, overlap=0) == [(0, 5)]

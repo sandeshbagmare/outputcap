@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>outputcap — keep a huge tool result out of the context window</title>
+<meta name="description" content="Keep a huge tool result out of the context window. Standard library only, Python 3.9+.">
+<meta property="og:title" content="outputcap — keep a huge tool result out of the context window">
+<meta property="og:description" content="Keep a huge tool result out of the context window. Standard library only, Python 3.9+.">
+<meta property="og:image" content="https://raw.githubusercontent.com/sandeshbagmare/outputcap/main/assets/banner.svg">
+<meta property="og:type" content="website">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: hsl(196 45% 8%);
+    --ink: #e6edf6;
+    --muted: #9fb0c6;
+    --line: hsl(196 35% 26%);
+    --accent: hsl(246 88% 66%);
+    --soft: hsl(246 92% 80%);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: var(--soft); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header {
+    position: sticky; top: 0; z-index: 9; display: flex; gap: 18px; align-items: center;
+    padding: 14px 24px; background: rgba(8, 12, 20, 0.86); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  header .mark { width: 26px; height: 26px; }
+  header strong { font-family: ui-monospace, monospace; letter-spacing: 0.02em; }
+  header nav { margin-left: auto; display: flex; gap: 16px; font-size: 14px; }
+  .hero { max-width: 1180px; margin: 0 auto; padding: 18px 20px 0; }
+  .hero img { width: 100%; border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,0.45); }
+  main { max-width: 900px; margin: 0 auto; padding: 28px 20px 80px; }
+  h1, h2, h3, h4 { line-height: 1.25; }
+  h2 { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em;
+    background: rgba(148, 163, 184, 0.15); padding: 1px 5px; border-radius: 5px;
+  }
+  pre.code {
+    position: relative; background: #070b12; border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; overflow-x: auto;
+  }
+  pre.code code { background: none; padding: 0; font-size: 14px; }
+  pre .lang {
+    position: absolute; top: 8px; right: 12px; font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 15px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+  img { max-width: 100%; }
+  blockquote {
+    margin: 18px 0; padding: 4px 16px; border-left: 3px solid var(--accent);
+    color: var(--muted);
+  }
+  footer {
+    border-top: 1px solid var(--line); padding: 26px 20px; color: var(--muted);
+    font-size: 14px; text-align: center;
+  }
+</style>
+</head>
+<body>
+<header>
+  <img class="mark" src="../assets/logo.svg" alt="">
+  <strong>outputcap</strong>
+  <nav>
+    <a href="https://pypi.org/project/outputcap/">PyPI</a>
+    <a href="https://github.com/sandeshbagmare/outputcap">GitHub</a>
+    <a href="https://github.com/sandeshbagmare/outputcap/issues">Issues</a>
+    <a href="https://github.com/sandeshbagmare/outputcap/blob/main/CHANGELOG.md">Changelog</a>
+  </nav>
+</header>
+<div class="hero"><img src="../assets/banner.svg" alt="outputcap"></div>
+<main>
+<p align="center">
+  <img src="../assets/how.svg" width="720" alt="how outputcap fits in">
+</p>
+<h2>Install</h2>
+<pre class="code"><span class="lang">console</span><code>pip install outputcap</code></pre>
+<h2>Use</h2>
+<pre class="code"><span class="lang">python</span><code>from outputcap import cap
+
+def read_file(path):
+    text = Path(path).read_text(errors=&quot;replace&quot;)
+    capped = cap(text, max_chars=4000, directory=&quot;.agent/outputs&quot;)
+    return capped.message()          # bounded preview + &quot;[output truncated: 812 kB … at …]&quot;
+
+def read_slice(path, start, end):    # the follow-up tool the model can call
+    return cap(...).read(start, end)</code></pre>
+<p>Reading the rest back:</p>
+<pre class="code"><span class="lang">python</span><code>capped.read(0, 2000)      # any slice of the full text
+capped.read()             # all of it
+read_handle(capped.handle)
+slices(capped.read(), 2000)   # [(0, 2000), (2000, 4000), …] for a paging tool</code></pre>
+<pre class="code"><span class="lang">console</span><code>$ outputcap build.log                        # preview on stdout, size on stderr
+$ outputcap api.json --max-chars 2000 --store .agent/outputs
+$ outputcap build.log --note-only            # just the one-line summary</code></pre>
+<h2>How the budget splits</h2>
+<p>The default split is 80% head and 20% tail, so the summary at the top and the failure at the bottom both survive. Choose it explicitly when you know better:</p>
+<pre class="code"><span class="lang">python</span><code>cap(text, max_chars=2000, head=2000, tail=0)   # a JSON document: the start is what matters
+cap(text, max_chars=2000, head=0, tail=2000)   # a log: only the end matters</code></pre>
+<p>The note is a single line, so a model reading the preview knows the value was cut, how big it was, and where the rest is:</p>
+<pre class="code"><code>[output truncated: 812441 chars, showing the first 3200 and the last 799; full value at .agent/outputs/output-1a2b3c4d.txt]</code></pre>
+<h2>Rules</h2>
+<ul>
+<li>Nothing is truncated below the budget; <code>cap</code> is a no-op when the value already fits.</li>
+<li>A dict or list becomes indented JSON, because that is what a model reads best.</li>
+<li>With <code>directory</code>, the full text is written once and the in-memory copy is dropped; without</li>
+</ul>
+<p>  it the value stays in <code>capped.full</code> and <code>capped.read()</code> still works.</p>
+<ul>
+<li><code>slices()</code> provides the ranges for a paging tool, with optional overlap so a match on a</li>
+</ul>
+<p>  boundary is not lost.</p>
+<ul>
+<li>The budget is in <strong>characters</strong>, not tokens: a token count needs the model's tokenizer,</li>
+</ul>
+<p>  which this library deliberately does not have.</p>
+<h2>Limits</h2>
+<ul>
+<li>No compression, no summarising, no embedding: the full value is kept verbatim and read</li>
+</ul>
+<p>  back verbatim. A summary would lose exactly the detail a follow-up needs.</p>
+<ul>
+<li>A budget below 16 characters drops the tail, because a separator costs more than it</li>
+</ul>
+<p>  saves.</p>
+<ul>
+<li>Files are written with a random name unless you pass <code>name=</code>; nothing cleans the</li>
+</ul>
+<p>  directory up, that is your run's job.</p>
+<h2>Development</h2>
+<pre class="code"><span class="lang">console</span><code>python -m venv .venv
+.venv/bin/pip install -e &quot;.[test]&quot;
+.venv/bin/pytest</code></pre>
+<h2>License</h2>
+<p>MIT.</p>
+</main>
+<footer>
+  outputcap · MIT · standard library only ·
+  <a href="https://github.com/sandeshbagmare/outputcap">source</a> ·
+  <a href="https://pypi.org/project/outputcap/">pip install outputcap</a>
+</footer>
+</body>
+</html>

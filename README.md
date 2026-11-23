@@ -1,29 +1,23 @@
-# outputcap
+<p align="center">
+  <img src="https://raw.githubusercontent.com/sandeshbagmare/outputcap/main/assets/banner.svg" width="100%" alt="outputcap: keep a huge tool result out of the context window">
+</p>
 
-Keep a large tool output out of the context window without losing it.
+<p align="center">
+  <a href="https://pypi.org/project/outputcap/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/outputcap.svg"></a>
+  <a href="https://pypi.org/project/outputcap/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/outputcap.svg"></a>
+  <a href="https://pypi.org/project/outputcap/"><img alt="Downloads" src="https://img.shields.io/pypi/dm/outputcap.svg"></a>
+  <a href="https://github.com/sandeshbagmare/outputcap/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/sandeshbagmare/outputcap/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/sandeshbagmare/outputcap/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/pypi/l/outputcap.svg"></a>
+  <a href="https://sandeshbagmare.github.io/outputcap/"><img alt="docs" src="https://img.shields.io/badge/docs-online-2ea44f.svg"></a>
+  <a href="https://pypi.org/project/outputcap/"><img alt="zero dependencies" src="https://img.shields.io/badge/dependencies-0-2ea44f.svg"></a>
+</p>
 
-[![PyPI](https://img.shields.io/pypi/v/outputcap.svg)](https://pypi.org/project/outputcap/)
-[![Python](https://img.shields.io/pypi/pyversions/outputcap.svg)](https://pypi.org/project/outputcap/)
-[![tests](https://github.com/sandeshbagmare/outputcap/actions/workflows/ci.yml/badge.svg)](https://github.com/sandeshbagmare/outputcap/actions/workflows/ci.yml)
-[![license](https://img.shields.io/pypi/l/outputcap.svg)](https://github.com/sandeshbagmare/outputcap/blob/main/LICENSE)
+<h3 align="center">keep a huge tool result out of the context window</h3>
+<p align="center"><em>Standard library only. No runtime dependencies. Python 3.9+.</em></p>
 
-```python
->>> from outputcap import cap
->>> capped = cap({"rows": list(range(5000))}, max_chars=200)
->>> capped.truncated
-True
->>> "truncated" in capped.message
-True
-```
-
-A tool that returns a 400 kB JSON blob, a whole web page or a 2 000-line log is not
-returning an answer, it is returning the haystack: the model pays for every character and
-loses the thread, and the run then fails on a context limit that had nothing to do with
-the question. Truncating blindly is not the fix either — the error is usually on the last
-line.
-
-`outputcap` keeps the head *and* the tail inside a fixed budget, says how much it cut,
-and puts the full value where a follow-up call can still read it.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/sandeshbagmare/outputcap/main/assets/how.svg" width="720" alt="how outputcap fits in">
+</p>
 
 ## Install
 

@@ -28,7 +28,7 @@ from typing import Any
 
 __all__ = ["Capped", "cap", "read_handle", "slices"]
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 DEFAULT_MAX_CHARS = 4000
 
@@ -127,7 +127,9 @@ def cap(
         target.mkdir(parents=True, exist_ok=True)
         filename = name or f"output-{uuid.uuid4().hex[:8]}.txt"
         handle = target / filename
-        handle.write_text(text, encoding="utf-8", newline="")
+        # `write_text(newline=...)` only exists from Python 3.10, and this package runs on 3.9.
+        with handle.open("w", encoding="utf-8", newline="") as stream:
+            stream.write(text)
     return Capped(
         text=preview,
         truncated=True,
